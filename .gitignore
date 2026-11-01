@@ -1,3 +1,9 @@
 debug.log
 scripts/run-workflow.ps1
 *.tar.gz
+.openai/
+.vercel/
+node_modules/
+.env
+.env.*
+!.env.example

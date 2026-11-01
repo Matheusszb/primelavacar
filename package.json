@@ -1,0 +1,8 @@
+{
+  "name": "prime-lava-car-jp",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs"
+  }
+}
