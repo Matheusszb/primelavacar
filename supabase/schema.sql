@@ -56,7 +56,7 @@ create table if not exists public.business_hours (
   check(start_time < end_time)
 );
 insert into public.business_hours(weekday,is_open,start_time,end_time)
-select d,d between 1 and 6,'08:00'::time,'18:00'::time from generate_series(0,6) d
+select d,false,'08:00'::time,'18:00'::time from generate_series(0,6) d
 on conflict(weekday) do nothing;
 
 create table if not exists public.blocked_slots (

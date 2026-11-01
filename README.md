@@ -4,7 +4,7 @@ Site estático responsivo com agendamento e gestão conectados ao Supabase. A pa
 
 ## Ativar agendamento e painel
 
-1. Crie um projeto no Supabase e execute [`supabase/schema.sql`](supabase/schema.sql) no SQL Editor de um projeto novo. A migração cria serviços iniciais sem preços, horários de atendimento editáveis, RLS, funções de agendamento e tabelas financeiras.
+1. Crie um projeto no Supabase e execute [`supabase/schema.sql`](supabase/schema.sql) no SQL Editor de um projeto novo. A migração cria serviços iniciais sem preços, horários inicialmente fechados, RLS, funções de agendamento e tabelas financeiras. No painel, cadastre os horários reais antes de abrir a agenda online.
 2. Em **Authentication > Users**, crie a conta do administrador. Copie o UUID desse usuário e execute no SQL Editor:
 
    ```sql
