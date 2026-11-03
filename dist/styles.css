@@ -19,3 +19,4 @@
 @media(max-width:760px){.hero{display:block;min-height:0}.hero>.container{padding:75px 0 55px}.hero-bottom{position:relative;bottom:auto;left:auto;right:auto}.hero .hero-bottom .container{padding:0}.mobile-book{display:none}.whatsapp-float{bottom:22px}}
 
 .service-body h3 .service-title-link{display:inline;color:inherit;font-size:inherit;font-weight:inherit;margin:0}
+@media(min-width:1001px){.service-group:nth-child(-n+2) .service-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}

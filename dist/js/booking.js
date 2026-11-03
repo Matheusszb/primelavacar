@@ -105,7 +105,7 @@ if(!configured){
       const items=services.filter(item=>categoryOf(item)===group);
       return items.length?`<optgroup label="${esc(group)}">${items.map(item=>`<option value="${esc(item.id)}">${esc(item.name)}</option>`).join('')}</optgroup>`:'';
     }).join('');
-    if(preset){const item=services.find(x=>x.id===preset||x.slug===preset);if(item){$('#service').value=item.id;updateService()}}
+    if(preset){const item=services.find(x=>x.id===preset||x.slug===preset);if(item){$('#service').value=item.id;updateService()}else{$('#booking-message').innerHTML=`<div class="notice">Este serviço ainda não está disponível no formulário. <a href="${waUrl(`Olá! Quero pedir atendimento para ${preset}.`)}" target="_blank" rel="noopener">Peça pelo WhatsApp.</a></div>`}}
     if(!services.length)showFallback();
   }catch{ $('#service').innerHTML='<option value="">Não foi possível carregar os serviços</option>';showFallback() }
 }
