@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 const root=join(dirname(fileURLToPath(import.meta.url)),'..');
 const dist=join(root,'dist');
 const previousOrigin='https://prime-lava-car-jp-2026.mtsartslogotipo.chatgpt.site';
-const siteUrl=(process.env.SITE_URL || (process.env.VERCEL_URL && `https://${process.env.VERCEL_URL}`) || previousOrigin).replace(/\/$/,'');
+const siteUrl='https://www.primelavacarjp.com.br';
 const supabaseUrl=(process.env.SUPABASE_URL || '').replace(/\/$/,'');
 const anonKey=process.env.SUPABASE_ANON_KEY || '';
 
@@ -30,4 +30,5 @@ async function rewrite(dir){
   }
 }
 await rewrite(dist);
+await import('./seo.mjs');
 console.log(`Build pronto para ${siteUrl}. Supabase ${supabaseUrl?'configurado':'pendente'}.`);

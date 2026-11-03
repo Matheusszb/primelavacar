@@ -4,7 +4,7 @@ import {dirname,join} from 'node:path';
 
 const siteRoot=join(dirname(fileURLToPath(import.meta.url)),'..');
 const dist=join(siteRoot,'dist');
-const origin='https://prime-lava-car-jp-2026.mtsartslogotipo.chatgpt.site';
+const origin='https://www.primelavacarjp.com.br';
 const services=JSON.parse(await readFile(join(siteRoot,'data','services.json'),'utf8'));
 const landing={slug:'lavagem-automotiva',name:'Lavagem automotiva',category:'Lavagem',description:'Lavagem de carro a domicílio em João Pessoa. Conheça as opções da Prime Lava Car JP e escolha o cuidado para seu veículo.',benefits:['Atendimento no endereço combinado','Opções de lavagem para diferentes necessidades'],image:'jeep.jpg',question:'O que preciso disponibilizar para a lavagem?',answer:'Uma torneira de água e um ponto de energia elétrica no endereço do atendimento.'};
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -41,7 +41,3 @@ const homePath=join(dist,'index.html');
 const home=await readFile(homePath,'utf8');
 if(!home.includes('<!-- CATALOG_START -->')||!home.includes('<!-- CATALOG_END -->'))throw new Error('Marcadores do catálogo ausentes na página inicial.');
 await writeFile(homePath,home.replace(/<!-- CATALOG_START -->[\s\S]*?<!-- CATALOG_END -->/,`<!-- CATALOG_START -->${catalog}<!-- CATALOG_END -->`),'utf8');
-
-const urls=['/','/agendar/',...([landing,...services].map(s=>`/servicos/${s.slug}/`))];
-await writeFile(join(dist,'sitemap.xml'),`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.map(path=>`<url><loc>${origin}${path}</loc></url>`).join('')}</urlset>`,'utf8');
-await writeFile(join(dist,'robots.txt'),`User-agent: *\nAllow: /\nDisallow: /admin/\nSitemap: ${origin}/sitemap.xml\n`,'utf8');

@@ -27,11 +27,12 @@ Ao importar este repositório na Vercel, deixe **Root Directory** na raiz do rep
 | --- | --- |
 | `SUPABASE_URL` | URL HTTPS do projeto Supabase |
 | `SUPABASE_ANON_KEY` | Chave pública **publishable** ou **anon** |
-| `SITE_URL` | URL pública final do site, por exemplo `https://seudominio.com.br` |
 
-O build grava apenas URL e chave pública em `dist/js/config.js`. Nunca configure `service_role`, secret key ou token do WhatsApp nessas variáveis públicas. Em prévias sem `SITE_URL`, o build usa a URL da implantação Vercel nos metadados canônicos. Depois de conectar o domínio, defina `SITE_URL` e faça uma nova implantação.
+O build grava apenas URL e chave pública em `dist/js/config.js`. Nunca configure `service_role`, secret key ou token do WhatsApp nessas variáveis públicas. As URLs canônicas, os dados estruturados e os sitemaps usam `https://www.primelavacarjp.com.br`, inclusive nas prévias da Vercel, para evitar duplicidade de indexação.
 
 Para testar localmente, configure as mesmas variáveis no ambiente, execute `npm run build` e sirva a pasta `dist/` por HTTP. Os arquivos de fotos já estão em `dist/assets/`.
+
+Depois do deploy, envie `https://www.primelavacarjp.com.br/sitemap.xml` ao Google Search Console. Ele aponta para os sitemaps de páginas e imagens. Execute `npm run check:seo` após o build para conferir URLs canônicas, arquivos de imagem e dados estruturados. O formulário de pedido é `noindex` e não aparece no sitemap; as páginas de serviços são as entradas de busca.
 
 ## WhatsApp
 
@@ -39,4 +40,4 @@ O site abre uma conversa no WhatsApp somente quando o visitante clica em um link
 
 ## Conteúdo e SEO
 
-[`data/services.json`](data/services.json) é a lista de referência para as páginas estáticas. `node scripts/generate-catalog-sql.mjs` atualiza o SQL do catálogo a partir dessa lista. O painel altera o catálogo lido do Supabase. Cada serviço tem página, título e descrição próprios; o build gera `sitemap.xml` e `robots.txt`. Cadastre apenas avaliações reais no painel. Quando o site estiver no domínio final, confirme o acesso público e conecte o Google Search Console.
+[`data/services.json`](data/services.json) é a lista de referência para as páginas estáticas. `node scripts/generate-catalog-sql.mjs` atualiza o SQL do catálogo a partir dessa lista. O painel altera o catálogo lido do Supabase. Cada serviço tem página, título e descrição próprios; o build gera `sitemap.xml`, `sitemap-pages.xml`, `sitemap-images.xml` e `robots.txt`. Cadastre apenas avaliações reais no painel.

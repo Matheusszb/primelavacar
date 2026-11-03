@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 Disallow: /admin/
-Sitemap: https://prime-lava-car-jp-2026.mtsartslogotipo.chatgpt.site/sitemap.xml
+Sitemap: https://www.primelavacarjp.com.br/sitemap.xml
