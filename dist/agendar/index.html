@@ -27,8 +27,9 @@
         </section>
         <section class="booking-step hidden" data-step="2" aria-labelledby="step-date-title">
           <span class="eyebrow">Passo 2 de 3</span><h2 id="step-date-title">Qual dia você prefere?</h2><p>Escolha uma data e o período que funciona melhor para você. Confirmaremos a disponibilidade antes de marcar o atendimento.</p>
-          <div class="field"><label for="date">Data de preferência *</label><input type="date" id="date" name="date" required></div>
+          <div class="field"><label for="date">Data de preferência *</label><input type="date" id="date" name="date" required><small>Segunda a sexta: 08:00–11:00 e 14:00–17:00. Sábado: 08:00, 10:00, 14:00 e 16:00. Domingo: fechado.</small></div>
           <div class="field"><label for="period">Período de preferência *</label><select id="period" name="period" required><option value="">Selecione um período</option><option value="manha">Manhã</option><option value="tarde">Tarde</option><option value="sem_preferencia">Sem preferência</option></select></div>
+          <div class="field hidden" id="saturday-time-field"><label for="saturday-time">Horário de preferência no sábado *</label><select id="saturday-time" name="saturday-time"><option value="">Selecione um horário</option><option value="08:00">08:00</option><option value="10:00">10:00</option><option value="14:00">14:00</option><option value="16:00">16:00</option></select></div>
           <p class="booking-hint">A data e o período são uma preferência, sujeitos à confirmação da equipe.</p>
           <div class="step-actions"><button class="btn btn-outline" id="back-date" type="button">← Voltar</button><button class="btn btn-red" id="next-date" type="button">Informar meus dados <span class="arrow">→</span></button></div>
         </section>
@@ -37,13 +38,12 @@
           <div class="form-grid"><div class="field"><label for="name">Seu nome *</label><input id="name" name="name" autocomplete="name" maxlength="120" placeholder="Nome e sobrenome" required></div><div class="field"><label for="phone">Seu WhatsApp com DDD *</label><input id="phone" name="phone" inputmode="tel" autocomplete="tel" placeholder="(83) 99999-9999" maxlength="20" required></div><div class="field span2"><label for="address">Endereço do atendimento *</label><input id="address" name="address" autocomplete="street-address" placeholder="Rua, número, bairro e cidade" maxlength="300" required><small>Vamos até você. Precisamos de água e energia elétrica no local.</small></div></div>
           <details class="optional-details"><summary>Adicionar observação (opcional)</summary><div class="field"><label for="notes">Algo que devemos saber?</label><textarea id="notes" name="notes" maxlength="1000" placeholder="Ex.: modelo do veículo ou ponto de referência"></textarea></div></details>
           <div class="final-summary"><strong>Confira seu pedido</strong><div><span>Serviço</span><b id="summary-service">—</b></div><div><span>Dia e período preferidos</span><b id="summary-when">—</b></div><div><span>Valor</span><b id="summary-price">Sob consulta</b></div></div>
-          <label class="checkline"><input type="checkbox" id="whatsapp-opt-in"><span>Quero receber um aviso de pedido recebido por WhatsApp, caso o envio automático esteja ativo.</span></label>
           <label class="checkline"><input type="checkbox" id="consent" required><span>Autorizo o uso dos meus dados para registrar e acompanhar este pedido e entrar em contato sobre o serviço. *</span></label>
           <div class="step-actions"><button class="btn btn-outline" id="back-contact" type="button">← Voltar</button><button class="btn btn-red" id="submit-booking" type="submit">Enviar pedido <span class="arrow">↗</span></button></div>
-          <p class="booking-hint">O pedido não garante o horário. A equipe entrará em contato para combinar disponibilidade, duração e valor.</p>
+          <p class="booking-hint">O pedido não garante o horário. A equipe entrará em contato para confirmar disponibilidade e duração.</p>
         </section>
       </form>
-      <aside class="booking-aside"><div class="panel"><div class="eyebrow">Antes de começar</div><h3>Atendimento na sua casa</h3><p>Vamos até o endereço combinado em João Pessoa e região, conforme disponibilidade.</p><ul><li>Você informa o dia e período preferidos.</li><li>Disponibilize uma torneira de água.</li><li>Precisamos de um ponto de energia elétrica.</li></ul><a href="https://wa.me/5583986201295" target="_blank" rel="noopener">Prefere conversar? Chame no WhatsApp ↗</a></div></aside>
+      <aside class="booking-aside"><div class="panel"><div class="eyebrow">Antes de começar</div><h3>Atendimento na sua casa</h3><p>Vamos até o endereço combinado em João Pessoa e região, conforme disponibilidade.</p><ul><li>Segunda a sexta: 08:00–11:00 e 14:00–17:00.</li><li>Sábado: 08:00, 10:00, 14:00 e 16:00.</li><li>Disponibilize uma torneira de água e energia elétrica.</li></ul><a href="https://wa.me/5583986201295" target="_blank" rel="noopener">Prefere conversar? Chame no WhatsApp ↗</a></div></aside>
     </div></section>
   </main>
   <footer class="footer"><div class="container footer-bottom" style="margin-top:0"><span>© Prime Lava Car JP · João Pessoa, PB</span><a href="/">Voltar ao início</a></div></footer>

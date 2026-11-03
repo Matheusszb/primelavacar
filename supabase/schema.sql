@@ -1,4 +1,5 @@
 -- Execute no SQL Editor de um projeto Supabase novo.
+-- Em seguida, execute catalog-update.sql para aplicar os serviços, preços e horários atuais.
 -- Depois, crie um usuário em Authentication e cadastre seu UUID em admin_users.
 create extension if not exists pgcrypto;
 
@@ -99,7 +100,6 @@ create table if not exists public.appointments (
   address text not null,
   notes text,
   consent_at timestamptz,
-  whatsapp_opt_in boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   check(starts_at < ends_at),
@@ -121,7 +121,6 @@ create table if not exists public.appointment_requests (
   notes text,
   status text not null default 'novo' check(status in ('novo','em_contato','agendado','cancelado')),
   consent_at timestamptz not null default now(),
-  whatsapp_opt_in boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -168,13 +167,6 @@ create table if not exists public.expenses (
 );
 create index if not exists expenses_date_idx on public.expenses(entry_date);
 
-create table if not exists public.message_delivery (
-  request_id uuid primary key references public.appointment_requests(id) on delete cascade,
-  status text not null check(status in ('processing','sent')),
-  provider_message_id text,
-  updated_at timestamptz not null default now()
-);
-
 create table if not exists public.testimonials (
   id uuid primary key default gen_random_uuid(),
   customer_name text not null,
@@ -195,7 +187,6 @@ alter table public.appointment_requests enable row level security;
 alter table public.quotes enable row level security;
 alter table public.income enable row level security;
 alter table public.expenses enable row level security;
-alter table public.message_delivery enable row level security;
 alter table public.testimonials enable row level security;
 
 create policy "admin_users_read_self" on public.admin_users for select to authenticated using(id=auth.uid());
@@ -212,7 +203,6 @@ create policy "appointment_requests_admin_only" on public.appointment_requests f
 create policy "quotes_admin_only" on public.quotes for all to authenticated using(public.is_admin()) with check(public.is_admin());
 create policy "income_admin_only" on public.income for all to authenticated using(public.is_admin()) with check(public.is_admin());
 create policy "expenses_admin_only" on public.expenses for all to authenticated using(public.is_admin()) with check(public.is_admin());
-create policy "delivery_admin_only" on public.message_delivery for all to authenticated using(public.is_admin()) with check(public.is_admin());
 create policy "testimonials_public_read" on public.testimonials for select to anon,authenticated using(published or public.is_admin());
 create policy "testimonials_admin_write" on public.testimonials for all to authenticated using(public.is_admin()) with check(public.is_admin());
 
@@ -225,8 +215,11 @@ begin
   select * into v_hours from public.business_hours where weekday=extract(dow from p_date)::smallint and is_open;
   if not found then return; end if;
   return query
-  select gs::time from generate_series(p_date+v_hours.start_time,p_date+v_hours.end_time-make_interval(mins=>v_duration),interval '30 minutes') gs
-  where (gs at time zone 'America/Fortaleza') > now()+interval '1 hour'
+  select gs::time from generate_series(p_date+time '08:00',p_date+time '17:00',interval '1 hour') gs
+  where gs::time between v_hours.start_time and v_hours.end_time
+    and ((extract(dow from p_date) between 1 and 5 and (gs::time between time '08:00' and time '11:00' or gs::time between time '14:00' and time '17:00'))
+      or (extract(dow from p_date)=6 and gs::time in (time '08:00',time '10:00',time '14:00',time '16:00')))
+    and (gs at time zone 'America/Fortaleza') > now()+interval '1 hour'
     and not exists(select 1 from public.blocked_slots b where b.slot_date=p_date and (b.start_time is null or (gs::time < b.end_time and (gs+make_interval(mins=>v_duration))::time>b.start_time)))
     and not exists(select 1 from public.appointments a where a.status<>'cancelado' and tstzrange(a.starts_at,a.ends_at,'[)') && tstzrange(gs at time zone 'America/Fortaleza',(gs+make_interval(mins=>v_duration)) at time zone 'America/Fortaleza','[)'));
 end;$$;
@@ -235,6 +228,7 @@ create or replace function public.book_appointment(p_service_id uuid,p_date date
 returns uuid language plpgsql security definer set search_path = '' as $$
 declare v_service public.services%rowtype; v_client_id uuid; v_start timestamptz; v_id uuid;
 begin
+  -- p_whatsapp_opt_in é mantido apenas para compatibilidade com bancos já instalados; nunca é usado.
   if not public.is_admin() then raise exception 'Acesso negado.'; end if;
   if not p_consent then raise exception 'É necessário autorizar o uso dos dados.'; end if;
   if length(trim(p_name))<3 or length(trim(p_name))>120 or p_phone !~ '^[0-9]{10,13}$' or length(trim(p_address))<10 or length(trim(p_address))>300 or length(coalesce(p_notes,''))>1000 then raise exception 'Dados do agendamento inválidos.'; end if;
@@ -244,8 +238,8 @@ begin
   v_start:=(p_date+p_time) at time zone 'America/Fortaleza';
   insert into public.clients(name,phone,address) values(trim(p_name),p_phone,trim(p_address))
   on conflict(phone) do update set name=excluded.name,address=excluded.address,updated_at=now() returning id into v_client_id;
-  insert into public.appointments(client_id,service_id,starts_at,ends_at,status,quoted_price,address,notes,consent_at,whatsapp_opt_in)
-  values(v_client_id,p_service_id,v_start,v_start+make_interval(mins=>v_service.duration_minutes),'pendente',v_service.price,trim(p_address),nullif(trim(coalesce(p_notes,'')),''),now(),p_whatsapp_opt_in) returning id into v_id;
+  insert into public.appointments(client_id,service_id,starts_at,ends_at,status,quoted_price,address,notes,consent_at)
+  values(v_client_id,p_service_id,v_start,v_start+make_interval(mins=>v_service.duration_minutes),'pendente',v_service.price,trim(p_address),nullif(trim(coalesce(p_notes,'')),''),now()) returning id into v_id;
   return v_id;
 exception when exclusion_violation then raise exception 'Horário indisponível.';
 end;$$;
@@ -254,6 +248,7 @@ create or replace function public.request_appointment(p_service_id uuid,p_date d
 returns uuid language plpgsql security definer set search_path = '' as $$
 declare v_id uuid;
 begin
+  -- p_whatsapp_opt_in é mantido apenas para compatibilidade com bancos já instalados; nunca é usado.
   if not p_consent then raise exception 'É necessário autorizar o uso dos dados.'; end if;
   if length(trim(coalesce(p_name,'')))<3 or length(trim(p_name))>120 or coalesce(p_phone,'') !~ '^[0-9]{10,13}$' or length(trim(coalesce(p_address,'')))<10 or length(trim(p_address))>300 or length(coalesce(p_notes,''))>1000 then
     raise exception 'Dados do pedido inválidos.';
@@ -262,8 +257,8 @@ begin
     raise exception 'Escolha uma data e um período válidos.';
   end if;
   if not exists(select 1 from public.services where id=p_service_id and active) then raise exception 'Serviço indisponível.'; end if;
-  insert into public.appointment_requests(customer_name,phone,service_id,preferred_date,preferred_period,address,notes,whatsapp_opt_in)
-  values(trim(p_name),p_phone,p_service_id,p_date,p_period,trim(p_address),nullif(trim(coalesce(p_notes,'')),''),p_whatsapp_opt_in) returning id into v_id;
+  insert into public.appointment_requests(customer_name,phone,service_id,preferred_date,preferred_period,address,notes)
+  values(trim(p_name),p_phone,p_service_id,p_date,p_period,trim(p_address),nullif(trim(coalesce(p_notes,'')),'')) returning id into v_id;
   return v_id;
 end;$$;
 
@@ -276,7 +271,7 @@ grant execute on function public.book_appointment(uuid,date,time,text,text,text,
 revoke all on function public.request_appointment(uuid,date,text,text,text,text,text,boolean,boolean) from public,anon,authenticated;
 grant execute on function public.request_appointment(uuid,date,text,text,text,text,text,boolean,boolean) to anon,authenticated;
 
-revoke all on public.admin_users,public.company_settings,public.services,public.business_hours,public.blocked_slots,public.clients,public.appointments,public.appointment_requests,public.quotes,public.income,public.expenses,public.message_delivery,public.testimonials from anon,authenticated;
+revoke all on public.admin_users,public.company_settings,public.services,public.business_hours,public.blocked_slots,public.clients,public.appointments,public.appointment_requests,public.quotes,public.income,public.expenses,public.testimonials from anon,authenticated;
 grant select on public.company_settings,public.services,public.business_hours,public.testimonials to anon;
 grant select on public.admin_users to authenticated;
 grant select,insert,update,delete on public.company_settings,public.services,public.business_hours,public.blocked_slots,public.clients,public.appointments,public.appointment_requests,public.quotes,public.income,public.expenses,public.testimonials to authenticated;

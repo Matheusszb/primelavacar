@@ -8,9 +8,8 @@ const observer=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isInte
 document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
 if(configured){
   try{
-    const [settings,hours,services,testimonials]=await Promise.all([
+    const [settings,services,testimonials]=await Promise.all([
       rest('company_settings','select=*'),
-      rest('business_hours','select=*&order=weekday.asc'),
       rest('services','select=*&active=eq.true&order=sort_order.asc'),
       rest('testimonials','select=*&published=eq.true&order=created_at.desc')
     ]);
@@ -21,11 +20,9 @@ if(configured){
     const about=document.querySelector('#about-text');if(about&&s.about)about.textContent=s.about;
     const address=document.querySelector('#contact-address');if(address&&s.address)address.textContent=s.address;
     const review=document.querySelector('#google-review-link');if(review&&s.review_url){const url=safeUrl(s.review_url);if(url){review.href=url;review.classList.remove('hidden')}}
-    const h=hours?.filter(x=>x.is_open),hoursEl=document.querySelector('#public-hours');
-    if(h?.length&&hoursEl){const names=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];hoursEl.textContent=h.map(x=>`${names[x.weekday]} ${x.start_time.slice(0,5)}–${x.end_time.slice(0,5)}`).join(' · ')}
     const catalog=document.querySelector('#services-catalog');
     if(services?.length&&catalog){
-      const categories=[['Lavagem','Para o cuidado de rotina do carro ou da moto.'],['Interior','Para cuidar das áreas de dentro do veículo.'],['Detalhes e acabamento','Para pintura, vidros, faróis e peças externas.']];
+      const categories=[['Lavagem automotiva','Opções de lavagem para o seu carro.'],['Estética automotiva','Brilho e proteção para a pintura e os faróis.'],['Lavagem de motocicletas','Cuidado externo para sua moto.']];
       catalog.innerHTML=categories.map(([category,intro])=>{
         const items=services.filter(x=>x.category===category);if(!items.length)return '';
         return `<div class="service-group"><div class="service-group-head"><div><span class="eyebrow">${esc(category)}</span><h3>${esc(category)}</h3></div><p>${esc(intro)}</p></div><div class="service-grid">${items.map((x,i)=>`<article class="service-card"><div class="service-img"><img src="${esc(safeUrl(x.image_url||'/assets/jeep.jpg'))}" alt="Veículo atendido pela Prime Lava Car JP" loading="lazy"><span class="service-no">${String(i+1).padStart(2,'0')}</span></div><div class="service-body"><h3>${esc(x.name)}</h3><p>${esc(x.description)}</p><div class="service-meta"><span>${x.duration_minutes?`${x.duration_minutes} min estimados`:'Duração a confirmar'}</span><span>${x.price!=null?Number(x.price).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}):'Valor sob consulta'}</span></div><a href="/agendar/?servico=${encodeURIComponent(x.id)}">Pedir atendimento <span>↗</span></a></div></article>`).join('')}</div></div>`
