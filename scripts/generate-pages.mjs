@@ -1,4 +1,4 @@
-import {mkdir,readFile,writeFile,rm} from 'node:fs/promises';
+import {mkdir,readFile,writeFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {dirname,join} from 'node:path';
 
@@ -6,7 +6,7 @@ const siteRoot=join(dirname(fileURLToPath(import.meta.url)),'..');
 const dist=join(siteRoot,'dist');
 const origin='https://prime-lava-car-jp-2026.mtsartslogotipo.chatgpt.site';
 const services=JSON.parse(await readFile(join(siteRoot,'data','services.json'),'utf8'));
-const landing={slug:'lavagem-automotiva',name:'Lavagem automotiva',category:'Lavagem automotiva',description:'Lavagem de carro a domicílio em João Pessoa. Conheça as cinco opções da Prime Lava Car JP e escolha o cuidado para seu veículo.',benefits:['Atendimento no endereço combinado','Opções de lavagem para diferentes necessidades'],image:'jeep.jpg',question:'O que preciso disponibilizar para a lavagem?',answer:'Uma torneira de água e um ponto de energia elétrica no endereço do atendimento.'};
+const landing={slug:'lavagem-automotiva',name:'Lavagem automotiva',category:'Lavagem',description:'Lavagem de carro a domicílio em João Pessoa. Conheça as opções da Prime Lava Car JP e escolha o cuidado para seu veículo.',benefits:['Atendimento no endereço combinado','Opções de lavagem para diferentes necessidades'],image:'jeep.jpg',question:'O que preciso disponibilizar para a lavagem?',answer:'Uma torneira de água e um ponto de energia elétrica no endereço do atendimento.'};
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const money=value=>Number(value).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 
@@ -29,15 +29,14 @@ function servicePage(service){
   <footer class="footer"><div class="container footer-bottom" style="margin-top:0"><span>© Prime Lava Car JP · João Pessoa, PB</span><a href="/">Voltar ao início</a></div></footer><a class="whatsapp-float" href="https://wa.me/5583986201295" target="_blank" rel="noopener" aria-label="Conversar no WhatsApp">✆</a><div class="mobile-book"><a href="/agendar/" class="btn btn-red">Pedir atendimento ↗</a></div><script type="module" src="/js/public.js"></script></body></html>`;
 }
 
-for(const slug of ['higienizacao-de-estofados','limpeza-interna-e-aspiracao','limpeza-de-teto','limpeza-de-rodas','cristalizacao-de-vidros','revitalizacao-de-plasticos'])await rm(join(dist,'servicos',slug),{recursive:true,force:true});
 for(const service of [landing,...services]){
   const dir=join(dist,'servicos',service.slug);
   await mkdir(dir,{recursive:true});
   await writeFile(join(dir,'index.html'),servicePage(service),'utf8');
 }
 
-const grouped=[['Lavagem automotiva','Opções de lavagem para o seu carro.'],['Estética automotiva','Brilho e proteção para a pintura e os faróis.'],['Lavagem de motocicletas','Cuidado externo para sua moto.']];
-const catalog=grouped.map(([category,intro])=>`<div class="service-group"><div class="service-group-head"><div><span class="eyebrow">${esc(category)}</span><h3>${esc(category)}</h3></div><p>${esc(intro)}</p></div><div class="service-grid">${services.filter(s=>s.category===category).map((s,index)=>`<article class="service-card"><div class="service-img"><img src="/assets/${s.image}" alt="${s.image.includes('logo')?'Logo Prime Lava Car JP':'Veículo atendido pela Prime Lava Car JP'}" loading="lazy"><span class="service-no">${String(index+1).padStart(2,'0')}</span></div><div class="service-body"><h3>${esc(s.name)}</h3><p>${esc(s.description)}</p>${s.price!=null?`<strong class="card-price">${money(s.price)}${s.priceNote?` <small>(${esc(s.priceNote)})</small>`:''}</strong>`:''}<a href="/servicos/${s.slug}/">Entender este serviço <span>↗</span></a></div></article>`).join('')}</div></div>`).join('');
+const grouped=[['Lavagem','Para carros e motocicletas.'],['Interior','Limpeza e cuidado da parte interna do veículo.'],['Detalhes e acabamento','Para pintura, vidros, faróis e peças externas.']];
+const catalog=grouped.map(([category,intro])=>`<div class="service-group"><div class="service-group-head"><div><span class="eyebrow">${esc(category)}</span><h3>${esc(category)}</h3></div><p>${esc(intro)}</p></div><div class="service-grid">${services.filter(s=>s.category===category).map((s,index)=>`<article class="service-card"><div class="service-img"><img src="/assets/${s.image}" alt="${s.image.includes('logo')?'Logo Prime Lava Car JP':'Veículo atendido pela Prime Lava Car JP'}" loading="lazy"><span class="service-no">${String(index+1).padStart(2,'0')}</span></div><div class="service-body"><h3><a class="service-title-link" href="/servicos/${s.slug}/">${esc(s.name)}</a></h3><p>${esc(s.description)}</p><div class="service-meta"><span>Duração a confirmar</span><span>${s.price!=null?`${money(s.price)}${s.priceNote?` (${esc(s.priceNote)})`:''}`:'Valor sob consulta'}</span></div><a href="/agendar/?servico=${encodeURIComponent(s.slug)}">Pedir atendimento <span>↗</span></a></div></article>`).join('')}</div></div>`).join('');
 const homePath=join(dist,'index.html');
 const home=await readFile(homePath,'utf8');
 if(!home.includes('<!-- CATALOG_START -->')||!home.includes('<!-- CATALOG_END -->'))throw new Error('Marcadores do catálogo ausentes na página inicial.');

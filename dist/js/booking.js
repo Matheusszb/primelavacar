@@ -2,7 +2,8 @@ import {configured,rest,rpc,esc,brl,dateBR,localISO} from './api.js';
 
 const $=selector=>document.querySelector(selector);
 const preset=new URLSearchParams(location.search).get('servico');
-const groups=['Lavagem automotiva','Estética automotiva','Lavagem de motocicletas'];
+const groups=['Lavagem','Interior','Detalhes e acabamento'];
+const categoryOf=item=>({'Lavagem automotiva':'Lavagem','Lavagem de motocicletas':'Lavagem','Estética automotiva':'Detalhes e acabamento'}[item.category]||item.category);
 const periodNames={manha:'manhã',tarde:'tarde',sem_preferencia:'sem preferência'};
 let services=[],whatsapp='5583986201295';
 
@@ -101,7 +102,7 @@ if(!configured){
     services=catalog||[];
     whatsapp=(settings?.[0]?.whatsapp||whatsapp).replace(/\D/g,'');updateWhatsAppLinks();
     $('#service').innerHTML='<option value="">Selecione um serviço</option>'+groups.map(group=>{
-      const items=services.filter(item=>item.category===group);
+      const items=services.filter(item=>categoryOf(item)===group);
       return items.length?`<optgroup label="${esc(group)}">${items.map(item=>`<option value="${esc(item.id)}">${esc(item.name)}</option>`).join('')}</optgroup>`:'';
     }).join('');
     if(preset){const item=services.find(x=>x.id===preset||x.slug===preset);if(item){$('#service').value=item.id;updateService()}}

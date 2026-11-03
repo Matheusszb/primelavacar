@@ -4,7 +4,7 @@ Site estático para Vercel, com catálogo, pedidos de atendimento e painel ligad
 
 ## 1. Configurar Supabase
 
-1. Crie um projeto Supabase e execute [`supabase/schema.sql`](supabase/schema.sql) no SQL Editor de um projeto novo. Em seguida, execute [`supabase/catalog-update.sql`](supabase/catalog-update.sql) para cadastrar os nove serviços, preços e horários informados. Em um projeto já configurado, execute apenas `catalog-update.sql`. O script preserva os pedidos e agendamentos existentes e desativa os serviços que saíram da tabela.
+1. Crie um projeto Supabase e execute [`supabase/schema.sql`](supabase/schema.sql) no SQL Editor de um projeto novo. Em seguida, execute [`supabase/catalog-update.sql`](supabase/catalog-update.sql) para cadastrar os 15 serviços, preços disponíveis e horários informados. Em um projeto já configurado, execute apenas `catalog-update.sql`. O script preserva os pedidos e agendamentos existentes e reativa os serviços das seções Interior e Detalhes e acabamento.
 2. Em **Authentication > Users**, crie a conta do administrador. Copie o UUID do usuário e execute:
 
    ```sql
