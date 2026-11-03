@@ -127,7 +127,26 @@ $('#booking-form').addEventListener('submit',async event=>{
     const preference=`${dateBR(date)}, ${periodNames[period]}${isSaturday()?` às ${time}`:''}`;
     const notes=[isSaturday()?`Horário preferido no sábado: ${time}.`:'',reference?`Ponto de referência: ${reference}.`:'',$('#notes').value.trim()].filter(Boolean).join(' ').slice(0,1000);
     await rpc('request_appointment',{p_service_id:item.id,p_date:date,p_period:period,p_name:name,p_phone:phone,p_address:address,p_notes:notes,p_consent:true,p_whatsapp_opt_in:false});
-    const message=`Olá! Enviei um pedido de atendimento na Prime Lava Car JP. Nome: ${name}. Serviço: ${item.name}. Preferência: ${preference}. Endereço: ${address}.${reference?` Ponto de referência: ${reference}.`:''}`;
+    const phoneDisplay=phone.length===11?`(${phone.slice(0,2)}) ${phone.slice(2,7)}-${phone.slice(7)}`:`(${phone.slice(0,2)}) ${phone.slice(2,6)}-${phone.slice(6)}`;
+    const message=[
+      '*Pedido de atendimento | Prime Lava Car JP*',
+      '',
+      `👤 *Cliente:* ${name}`,
+      `📱 *WhatsApp:* ${phoneDisplay}`,
+      `🚘 *Serviço:* ${item.name}`,
+      '',
+      `📅 *Data de preferência:* ${dateBR(date)}`,
+      `🕒 *${isSaturday()?'Horário':'Período'}:* ${isSaturday()?`${time} (${periodNames[period]})`:periodNames[period]}`,
+      '',
+      '*Endereço do atendimento*',
+      `📍 ${street}, nº ${number}`,
+      `Bairro: ${neighborhood}`,
+      `Cidade: ${city}`,
+      ...(reference?[`🧭 *Referência:* ${reference}`]:[]),
+      ...($('#notes').value.trim()?[``, `📝 *Observações:* ${$('#notes').value.trim().replace(/\s+/g,' ')}`]:[]),
+      '',
+      'Podem confirmar a disponibilidade, por favor?'
+    ].join('\n');
     $('#booking-form').innerHTML=`<div class="eyebrow">Pedido enviado</div><h2 style="margin-top:17px">Recebemos sua solicitação.</h2><p>Registramos seu pedido de <strong>${esc(item.name)}</strong> para <strong>${esc(preference)}</strong>. A equipe entrará em contato para confirmar a disponibilidade e a duração.</p><div class="notice success">A preferência ainda precisa ser confirmada pela equipe.</div><a class="btn btn-red" href="${waUrl(message)}" target="_blank" rel="noopener" style="margin-top:20px">Falar no WhatsApp ↗</a>`;
   }catch(error){notice(error.message)}
   finally{button.disabled=false;button.innerHTML='Enviar pedido <span class="arrow">↗</span>'}
