@@ -11,6 +11,27 @@ menu?.addEventListener('click',()=>{const open=links.classList.toggle('open');me
 links?.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>links.classList.remove('open')));
 $('#date').min=localISO();
 const maxDate=new Date();maxDate.setDate(maxDate.getDate()+90);$('#date').max=localISO(maxDate);
+const datePageSize=10;
+const dateChoices=[];
+for(const day=new Date();day<=maxDate;day.setDate(day.getDate()+1)){
+  if(day.getDay()!==0)dateChoices.push({value:localISO(day),date:new Date(day.getFullYear(),day.getMonth(),day.getDate(),12)});
+}
+let datePage=0;
+const shortWeekday=new Intl.DateTimeFormat('pt-BR',{weekday:'short'});
+const shortMonth=new Intl.DateTimeFormat('pt-BR',{month:'short'});
+const fullDate=new Intl.DateTimeFormat('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+
+function renderDates(){
+  const visible=dateChoices.slice(datePage*datePageSize,(datePage+1)*datePageSize);
+  const selected=$('#date').value;
+  $('#date-options').innerHTML=visible.map(({value,date})=>`<button type="button" class="date-option" data-date="${value}" aria-pressed="${value===selected}" aria-label="${fullDate.format(date)}"><span class="date-weekday">${shortWeekday.format(date).replace('.','')}</span><span class="date-day">${date.getDate()}</span><span class="date-month">${shortMonth.format(date).replace('.','')}</span></button>`).join('');
+  $('#date-range').textContent=visible.length?`${dateBR(visible[0].value).slice(0,5)} a ${dateBR(visible.at(-1).value).slice(0,5)}`:'';
+  $('#previous-dates').disabled=datePage===0;
+  $('#next-dates').disabled=(datePage+1)*datePageSize>=dateChoices.length;
+  const chosen=dateChoices.find(item=>item.value===selected);
+  $('#selected-date').textContent=chosen?`Dia escolhido: ${fullDate.format(chosen.date)}`:'Nenhum dia escolhido.';
+  $('#selected-date').classList.toggle('chosen',Boolean(chosen));
+}
 
 function notice(message){$('#booking-message').innerHTML=`<div class="notice error">${esc(message)}</div>`}
 function clearNotice(){$('#booking-message').innerHTML=''}
@@ -46,15 +67,20 @@ function updateDateOptions(){
   const period=$('#period');
   period.querySelector('[value="sem_preferencia"]').disabled=saturday;
   if(saturday&&period.value==='sem_preferencia')period.value='';
+  renderDates();
   updateSummary();
 }
 
 $('#service').addEventListener('change',()=>{clearNotice();updateService()});
-$('#date').addEventListener('change',updateDateOptions);
+$('#date-options').addEventListener('click',event=>{const button=event.target.closest('[data-date]');if(!button)return;$('#date').value=button.dataset.date;$('#date').dispatchEvent(new Event('change',{bubbles:true}))});
+$('#previous-dates').addEventListener('click',()=>{if(datePage>0){datePage--;renderDates()}});
+$('#next-dates').addEventListener('click',()=>{if((datePage+1)*datePageSize<dateChoices.length){datePage++;renderDates()}});
+$('#date').addEventListener('change',()=>{const value=$('#date').value;if(value&&(!$('#date').checkValidity()||weekday()===0)){notice(weekday()===0?'Não atendemos aos domingos. Escolha outro dia.':'Escolha uma data dentro dos próximos 90 dias.');$('#date').value=''}else if(value){clearNotice();const index=dateChoices.findIndex(item=>item.value===value);if(index>=0)datePage=Math.floor(index/datePageSize)}updateDateOptions()});
+renderDates();
 $('#period').addEventListener('change',()=>{if(isSaturday()){const time=$('#saturday-time');if($('#period').value==='manha'&&!['08:00','10:00'].includes(time.value))time.value='';if($('#period').value==='tarde'&&!['14:00','16:00'].includes(time.value))time.value=''}updateSummary()});
 $('#saturday-time').addEventListener('change',()=>{const time=$('#saturday-time').value;if(time)$('#period').value=time<'12:00'?'manha':'tarde';updateSummary()});
 $('#next-service').addEventListener('click',()=>{if(!service()){notice('Escolha um serviço para continuar.');$('#service').focus();return}step(2)});
-$('#next-date').addEventListener('click',()=>{const date=$('#date'),day=weekday(),time=$('#saturday-time').value,period=$('#period').value;if(!date.value||!date.checkValidity()||day===null||day===0||!periodNames[period]||(day===6&&(!time||(time<'12:00'?'manha':'tarde')!==period))){notice(day===0?'Não atendemos aos domingos. Escolha outro dia.':day===6?'Escolha um dos horários disponíveis no sábado.':'Escolha uma data e um período de preferência.');(day===6?$('#saturday-time'):date.value&&day!==0?$('#period'):date).focus();return}updateSummary();step(3)});
+$('#next-date').addEventListener('click',()=>{const date=$('#date'),day=weekday(),time=$('#saturday-time').value,period=$('#period').value;if(!date.value||!date.checkValidity()||day===null||day===0||!periodNames[period]||(day===6&&(!time||(time<'12:00'?'manha':'tarde')!==period))){notice(day===0?'Não atendemos aos domingos. Escolha outro dia.':day===6?'Escolha um dos horários disponíveis no sábado.':'Escolha um dia e um período de preferência.');(day===6?$('#saturday-time'):date.value&&day!==0?$('#period'):$('#date-options button')).focus();return}updateSummary();step(3)});
 $('#back-date').addEventListener('click',()=>step(1));
 $('#back-contact').addEventListener('click',()=>step(2));
 $('#phone').addEventListener('input',event=>{const digits=event.target.value.replace(/\D/g,'').slice(0,11);const ddd=digits.slice(0,2),number=digits.slice(2);event.target.value=digits.length>2?`(${ddd}) ${number.length>4?`${number.slice(0,-4)}-${number.slice(-4)}`:number}`:digits});
