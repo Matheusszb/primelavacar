@@ -51,10 +51,16 @@ function updateService(){
   if(!item)return;
   preview.innerHTML=`<strong>${esc(item.name)}</strong><p>${esc(item.description)}</p><span>${item.price!=null?brl(item.price):'Valor sob consulta'}</span><span>${item.duration_minutes?`${item.duration_minutes} min estimados`:'Duração a confirmar'}</span>`;
 }
+function addressParts(){
+  const street=$('#street').value.trim(),number=$('#number').value.trim(),neighborhood=$('#neighborhood').value.trim(),city=$('#city').value.trim(),reference=$('#reference').value.trim();
+  return {street,number,neighborhood,city,reference,address:`Rua: ${street}, nº ${number}; Bairro: ${neighborhood}; Cidade: ${city}`};
+}
 function updateSummary(){
   const item=service(),period=periodNames[$('#period').value];
   $('#summary-service').textContent=item?.name||'—';
   $('#summary-when').textContent=$('#date').value&&period?`${dateBR($('#date').value)} · ${period}${isSaturday()&&$('#saturday-time').value?` · ${$('#saturday-time').value}`:''}`:'—';
+  const address=addressParts();
+  $('#summary-address').textContent=address.street&&address.number&&address.neighborhood&&address.city?`${address.address}${address.reference?` · Ref.: ${address.reference}`:''}`:'—';
   $('#summary-price').textContent=item?.price!=null?brl(item.price):'Sob consulta';
 }
 function weekday(){const value=$('#date').value;if(!/^\d{4}-\d{2}-\d{2}$/.test(value))return null;const [year,month,day]=value.split('-').map(Number);const date=new Date(year,month-1,day);return date.getFullYear()===year&&date.getMonth()===month-1&&date.getDate()===day?date.getDay():null}
@@ -84,6 +90,7 @@ $('#next-date').addEventListener('click',()=>{const date=$('#date'),day=weekday(
 $('#back-date').addEventListener('click',()=>step(1));
 $('#back-contact').addEventListener('click',()=>step(2));
 $('#phone').addEventListener('input',event=>{const digits=event.target.value.replace(/\D/g,'').slice(0,11);const ddd=digits.slice(0,2),number=digits.slice(2);event.target.value=digits.length>2?`(${ddd}) ${number.length>4?`${number.slice(0,-4)}-${number.slice(-4)}`:number}`:digits});
+['street','number','neighborhood','city','reference'].forEach(id=>document.getElementById(id).addEventListener('input',updateSummary));
 
 if(!configured){
   $('#service').innerHTML='<option value="">Pedidos online indisponíveis</option>';
@@ -104,18 +111,22 @@ if(!configured){
 
 $('#booking-form').addEventListener('submit',async event=>{
   event.preventDefault();
-  const item=service(),date=$('#date').value,period=$('#period').value,time=$('#saturday-time').value,name=$('#name').value.trim(),phone=$('#phone').value.replace(/\D/g,''),address=$('#address').value.trim();
+  const item=service(),date=$('#date').value,period=$('#period').value,time=$('#saturday-time').value,name=$('#name').value.trim(),phone=$('#phone').value.replace(/\D/g,'');
+  const {street,number,neighborhood,city,reference,address}=addressParts();
   if(!item||!date||!$('#date').checkValidity()||weekday()===null||weekday()===0||!periodNames[period]||(isSaturday()&&(!time||(time<'12:00'?'manha':'tarde')!==period))){notice('Confira o serviço, a data e o horário de preferência.');return}
   if(name.length<3){notice('Informe seu nome.');$('#name').focus();return}
   if(phone.length<10||phone.length>11){notice('Informe um WhatsApp válido com DDD.');$('#phone').focus();return}
-  if(address.length<10){notice('Informe rua, número, bairro e cidade.');$('#address').focus();return}
+  for(const [selector,value,label] of [['#street',street,'rua'],['#number',number,'número'],['#neighborhood',neighborhood,'bairro'],['#city',city,'cidade']]){
+    if(!value){notice(`Informe ${label} do endereço.`);$(selector).focus();return}
+  }
+  if(address.length>300){notice('O endereço está muito longo. Revise os campos.');$('#street').focus();return}
   if(!$('#consent').checked){notice('Autorize o uso dos dados para registrar o pedido.');$('#consent').focus();return}
   const button=$('#submit-booking');button.disabled=true;button.textContent='Enviando pedido...';
   try{
     const preference=`${dateBR(date)}, ${periodNames[period]}${isSaturday()?` às ${time}`:''}`;
-    const notes=`${isSaturday()?`Horário preferido no sábado: ${time}. `:''}${$('#notes').value.trim()}`.trim().slice(0,1000);
+    const notes=[isSaturday()?`Horário preferido no sábado: ${time}.`:'',reference?`Ponto de referência: ${reference}.`:'',$('#notes').value.trim()].filter(Boolean).join(' ').slice(0,1000);
     await rpc('request_appointment',{p_service_id:item.id,p_date:date,p_period:period,p_name:name,p_phone:phone,p_address:address,p_notes:notes,p_consent:true,p_whatsapp_opt_in:false});
-    const message=`Olá! Enviei um pedido de atendimento na Prime Lava Car JP. Nome: ${name}. Serviço: ${item.name}. Preferência: ${preference}. Endereço: ${address}.`;
+    const message=`Olá! Enviei um pedido de atendimento na Prime Lava Car JP. Nome: ${name}. Serviço: ${item.name}. Preferência: ${preference}. Endereço: ${address}.${reference?` Ponto de referência: ${reference}.`:''}`;
     $('#booking-form').innerHTML=`<div class="eyebrow">Pedido enviado</div><h2 style="margin-top:17px">Recebemos sua solicitação.</h2><p>Registramos seu pedido de <strong>${esc(item.name)}</strong> para <strong>${esc(preference)}</strong>. A equipe entrará em contato para confirmar a disponibilidade e a duração.</p><div class="notice success">A preferência ainda precisa ser confirmada pela equipe.</div><a class="btn btn-red" href="${waUrl(message)}" target="_blank" rel="noopener" style="margin-top:20px">Falar no WhatsApp ↗</a>`;
   }catch(error){notice(error.message)}
   finally{button.disabled=false;button.innerHTML='Enviar pedido <span class="arrow">↗</span>'}
